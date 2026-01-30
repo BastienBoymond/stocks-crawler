@@ -2,7 +2,7 @@ import { getQuote, getStockInfo, getLastPrice } from "./index.js";
 
 async function main() {
   // Test with ISIN
-  const isin = "FR0000120073"; // Air Liquide
+  const isin = "TSLA"; // Air Liquide
 
   console.log(`Testing all functions with ISIN: ${isin}\n`);
 

@@ -1,6 +1,6 @@
 {
   "name": "stocks-crawler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Minimal TypeScript library to fetch stock quotes from Boursorama",
   "type": "module",
   "main": "dist/index.js",
@@ -12,7 +12,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc",
