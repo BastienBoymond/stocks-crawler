@@ -1,0 +1,37 @@
+{
+  "name": "stocks-crawler",
+  "version": "1.0.0",
+  "description": "Minimal TypeScript library to fetch stock quotes from Boursorama",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "example": "tsx src/example.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "stocks",
+    "boursorama",
+    "crawler",
+    "finance",
+    "etf",
+    "tracker",
+    "euronext",
+    "isin"
+  ],
+  "license": "MIT"
+}
