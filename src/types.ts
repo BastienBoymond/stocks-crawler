@@ -30,7 +30,7 @@ export interface StockQuote {
   name: string;
   symbol: string;
   info?: StockInfo;
-  yesterday: PriceData;
+  previousClose: number;
   today: PriceData;
   change: Change;
   ticks: Tick[];

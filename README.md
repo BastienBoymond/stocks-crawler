@@ -60,7 +60,7 @@ interface StockQuote {
   name: string;
   symbol: string;
   info?: StockInfo;
-  yesterday: PriceData;
+  previousClose: number; // only the previous close is exposed upstream (no full yesterday OHLCV)
   today: PriceData;
   change: Change;
   ticks: Tick[];
