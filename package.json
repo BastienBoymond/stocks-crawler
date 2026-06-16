@@ -1,8 +1,16 @@
 {
   "name": "stocks-crawler",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Minimal TypeScript library to fetch stock quotes from Boursorama",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BastienBoymond/stocks-crawler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BastienBoymond/stocks-crawler/issues"
+  },
+  "homepage": "https://github.com/BastienBoymond/stocks-crawler#readme",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
