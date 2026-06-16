@@ -1,5 +1,16 @@
 import type { StockQuote, StockInfo } from "./types.js";
-import { BASE_URL, API_URL, mapPriceData, mapTick, calculateChange, resolveSymbol } from "./utils.js";
+import {
+  BASE_URL,
+  API_URL,
+  mapPriceData,
+  mapTick,
+  calculateChange,
+  resolveSymbol,
+  round4,
+  fetchCoursPage,
+  parseName,
+  parseStockInfo,
+} from "./utils.js";
 
 export async function searchSymbol(query: string): Promise<string | null> {
   const res = await fetch(`${BASE_URL}/recherche/ajax?query=${encodeURIComponent(query)}`);
@@ -10,58 +21,64 @@ export async function searchSymbol(query: string): Promise<string | null> {
 
 export async function getStockInfo(code: string): Promise<StockInfo | null> {
   const symbol = await resolveSymbol(code);
-
-  const res = await fetch(`${BASE_URL}/cours/${symbol}/`);
-  const html = await res.text();
-
-  const jsonMatch = html.match(/\{[^}]*"fv_code_isin"[^}]*\}/);
-  if (!jsonMatch) return null;
-
-  try {
-    const data = JSON.parse(jsonMatch[0]);
-    return {
-      symbol: data.fv_symb_societe || symbol,
-      isin: data.fv_code_isin?.split('_')[0] || '',
-      exchange: data.fv_bourse_label || '',
-      eligibility: data.fv_eligibilite || [],
-      provider: data.fv_trust_group || '',
-      issuer: data.fv_promoter || '',
-      sector: data.fv_secteur_activite || '',
-      index: data.fv_indice_principal || '',
-    };
-  } catch {
-    return null;
-  }
+  const html = await fetchCoursPage(symbol);
+  return parseStockInfo(html, symbol);
 }
 
 export async function getQuote(code: string, includeInfo = false): Promise<StockQuote> {
   const symbol = await resolveSymbol(code);
 
-  const res = await fetch(
-    `${API_URL}/GetTicksEOD?symbol=${symbol}&length=1&period=0`
-  );
+  const res = await fetch(`${API_URL}/UpdateCharts?symbol=${symbol}&period=-1`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch quote for ${symbol}: HTTP ${res.status}`);
+  }
+
   const json = await res.json();
-  const data = json.d;
-  const todayData = mapPriceData(data.qd);
-  const yesterdayData = mapPriceData(data.qv);
+  const days = json?.d;
+  if (!Array.isArray(days) || days.length === 0) {
+    throw new Error(`No quote data for symbol: ${symbol}`);
+  }
+
+  const bar = days[days.length - 1];
+  if (!bar || typeof bar.c !== "number" || typeof bar.var !== "number") {
+    throw new Error(`No quote data for symbol: ${symbol}`);
+  }
+
+  const todayData = mapPriceData(bar);
+  const previousClose = round4(bar.c - bar.var);
+
+  const html = await fetchCoursPage(symbol);
 
   const quote: StockQuote = {
-    name: data.Name,
-    symbol: data.SymbolId,
-    yesterday: yesterdayData,
+    name: parseName(html) ?? symbol,
+    symbol,
+    previousClose,
     today: todayData,
-    change: calculateChange(todayData.current, yesterdayData.current),
-    ticks: data.QuoteTab.map(mapTick),
+    change: calculateChange(bar.c, previousClose),
+    ticks: (bar.qt || []).map(mapTick),
   };
 
   if (includeInfo) {
-    quote.info = await getStockInfo(symbol) || undefined;
+    quote.info = parseStockInfo(html, symbol) || undefined;
   }
 
   return quote;
 }
 
 export async function getLastPrice(code: string): Promise<number> {
-  const data = await getQuote(code);
-  return data.today.current;
+  const symbol = await resolveSymbol(code);
+
+  const res = await fetch(`${API_URL}/UpdateCharts?symbol=${symbol}&period=0`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch price for ${symbol}: HTTP ${res.status}`);
+  }
+
+  // With period=0 the bar is the top-level object: {d: <date>, o, h, l, c, v}.
+  // A dead/invalid symbol returns an empty array instead.
+  const bar = await res.json();
+  if (Array.isArray(bar) || typeof bar?.c !== "number") {
+    throw new Error(`No quote data for symbol: ${symbol}`);
+  }
+
+  return bar.c;
 }
